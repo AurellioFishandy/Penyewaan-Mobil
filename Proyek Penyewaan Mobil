@@ -1,0 +1,591 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+#include <windows.h>
+#include <conio.h>
+
+struct Car {
+    char * NomorPlat;
+    int jartem;
+    int TanggalKembali;
+    struct Car * next;
+};
+typedef struct Car Car;
+
+Car * addToList(Car * list, Car * car, int type);
+Car * Transfercar(Car * list, char * NomorPlat);
+Car * list1(char * NomorPlat, int  jartem);
+Car * list2(Car * list, char * dataText, int List0);
+char * verifplat();
+double harga(int jartem);
+int tanggalbeda(int tanggal1, int tanggal2);
+int cekduplikat(Car * list, Car * listTwo, char * NomorPlat, int option);
+int carijartem(Car * car, char * NomorPlat);
+int verifpilihan(char * command);
+int veriftanggal();
+int verifjart();
+void printList(Car * list);
+int i,l;
+
+int main(int argc, char** argv)
+{
+    int convertString;
+    int duplikat;
+    int errorChecking;
+    int jartem, totalJart;
+    int List0;
+    Car * car;
+    Car * afr = NULL;
+    Car * r = NULL; 
+    char command[1000] = "";
+    char dataText[1000] = "";
+    char * NomorPlat = NULL;
+    double pemasukan;
+    convertString = 0;
+    duplikat = 0;
+    errorChecking = 0;
+    pemasukan = 0.0;
+    jartem = 0;
+    totalJart = 0;
+    List0 = 0;
+
+    printf("Welcome to the program\n");
+    while (convertString != 5)
+    {
+        while (errorChecking == 0)
+        {
+        
+            printf("(1) Masukkan Mobil Baru yang ingin di sewa.\n");
+            printf("(2) Mengembalikan Mobil sewaan. \n");
+            printf("(3) Sewa Mobil sewaan.\n");
+            printf("(4) Print list mobil sewaan.\n");
+            printf("(5) Quit.\n");
+            scanf("%s", command);
+            if (verifpilihan(command) == 1)
+            {
+                errorChecking = 1;
+            }
+            else
+            {
+                continue;
+            }
+        }
+        errorChecking = 0;
+        convertString = atoi(command);
+
+        if (convertString == 1)
+        {
+        	system ("cls");
+            while (duplikat == 0)
+            {
+                NomorPlat = verifplat(); 
+                duplikat = cekduplikat(afr, r, NomorPlat, 0); 
+            }
+            duplikat = 0;
+            jartem = verifjart();
+            car = list1(NomorPlat, jartem);
+            afr = addToList(afr, car, 0);
+            printf("Mobil dengan plat %s sudah dimasukkan sistem.\n", NomorPlat);
+      		getch();
+      		system("cls");
+        }
+        else if (convertString == 2)
+        {
+        	system ("cls");
+            if (r == NULL)
+            {
+                printf("Error: Tidak ada Mobil yang bisa disewakan.\n");
+                
+            }
+
+            duplikat = 1;
+            while (duplikat != 0) 
+            {
+                NomorPlat = verifplat();
+                duplikat = cekduplikat(afr, r, NomorPlat, 1);
+            }
+
+            printf("Berapa Jarak yang anda telah tempuh?\n");
+            jartem = verifjart();
+            totalJart = carijartem(r, NomorPlat);
+            r = Transfercar(r, NomorPlat);
+            pemasukan = pemasukan + harga(jartem);
+            jartem = jartem + totalJart;
+            printf("Mobil dengan plat %s telah dikembalikan.\n", NomorPlat);
+            car = list1(NomorPlat, jartem); 
+            car->TanggalKembali = 0;
+            afr = addToList(afr, car, 0);
+            getch();
+            system ("cls");
+        }
+        else if (convertString == 3)
+        {
+        	system ("cls");
+            if (afr == NULL)
+            {
+                printf("Error: Tidak ada mobil yang disewakan\n");
+            }
+            else
+            {
+                printf("Mobil dengan plat %s telah berhasil di sewa.\n", afr->NomorPlat);
+                r = addToList(r, afr, 1);
+                afr = afr->next;
+                getch();
+				system ("cls"); 
+            }
+        }
+        else if (convertString == 4)
+        {
+        	system ("cls");
+            printf("Mobil yang dapat disewa: \n");
+            printList(afr);
+            printf("\nMobil yang sedang disewa: \n");
+            printList(r);
+         
+            printf("\n");
+            getch();
+            system ("cls");
+        }
+        duplikat = 0;
+    }
+    printf("Terimakasih telah mengunjungi program ini.\n");
+    
+    printf("Pemasukan yang didapatkan: $%f\n", pemasukan);
+    free(afr);
+    free(r);
+    return 0;
+}
+
+Car * addToList(Car * list, Car * car, int type) 
+{
+    int TanggalKembali = car->TanggalKembali;
+    Car * tempPrevious = NULL;
+    Car * temp = list;
+    if (temp == NULL)
+    {
+        if (type == 0 || type == 2)
+        {
+            return car;
+        }
+        else
+        {
+            Car * tempTwo;
+            tempTwo = list1(car->NomorPlat, car->jartem);
+            if (car->TanggalKembali == 0) 
+            {
+                TanggalKembali = veriftanggal();
+            }
+            tempTwo->TanggalKembali = TanggalKembali;
+            return tempTwo;
+        }
+    }
+    else
+    {
+        if (type == 1 && TanggalKembali == 0) 
+        {
+            TanggalKembali = veriftanggal();
+        }
+
+        while (temp != NULL)
+        {
+            if (type == 0)
+            {
+                if (car->jartem <= temp->jartem)
+                {
+                    if (tempPrevious != NULL) 
+                    {
+                        car->next = temp;
+                        tempPrevious->next = car;
+                        return list;
+                    }
+                    else
+                    {
+                        car->next = list;
+                        return car;
+                    }
+                }
+            }
+
+            else if (type == 1)
+            {
+                if (tanggalbeda(TanggalKembali, temp->TanggalKembali) == 1) 
+                {
+                    Car * tempTwo;
+                    if (tempPrevious == NULL)
+                    {
+                        tempTwo = list1(car->NomorPlat, car->jartem);
+                        tempTwo->next = list;
+                        tempTwo->TanggalKembali = TanggalKembali;
+                        return tempTwo;
+                    }
+                    else
+                    {
+                        tempTwo = list1(car->NomorPlat, car->jartem);
+                        tempTwo->next = temp;
+                        tempPrevious->next = tempTwo;
+                        tempTwo->TanggalKembali = TanggalKembali;
+                        return list;
+                    }
+                }
+            }
+            tempPrevious = temp;
+            temp = temp->next;
+        }
+
+        if (type == 0) 
+        {
+            tempPrevious->next = car;
+            return list;
+        }
+        else
+        {
+            Car * tempTwo;
+            tempTwo = list1(car->NomorPlat, car->jartem);
+            tempTwo->TanggalKembali = TanggalKembali;
+            tempPrevious->next = tempTwo;
+            return list;
+        }
+    }
+}
+
+
+Car * Transfercar(Car * list, char * NomorPlat)
+{
+    Car * temp = list;
+    Car * tempPrevious = NULL;
+
+    while (temp != NULL)
+    {
+         if (strcmp(temp->NomorPlat, NomorPlat) == 0) 
+         {
+             if (tempPrevious == NULL)
+             {
+                 temp = temp->next;
+                 return temp;
+             }
+             else
+             {
+                 tempPrevious->next = temp->next; 
+                 return list;
+             }
+         }
+         tempPrevious = temp;
+         temp = temp->next;
+    }
+    return list;
+}
+
+Car * list1(char * NomorPlat, int jartem)
+{
+    Car * car = malloc(sizeof(Car));
+    car->NomorPlat = malloc(sizeof(char)*8);
+    strcpy(car->NomorPlat, NomorPlat);
+    car->jartem = jartem;
+    car->next = NULL;
+    return car;
+}
+
+
+Car * list2(Car * list, char * dataText, int List0)
+{
+    char * item;
+    char NomorPlat[8];
+    int jartem = 0;
+    int TanggalKembali = 0;
+
+    if (dataText[0] == '\n') 
+    {
+        return list;
+    }
+    item = strtok(dataText, " ");
+    strcpy(NomorPlat, item);
+    item = strtok(NULL, " ");
+    jartem = atoi(item);
+    if (List0 == 1) 
+    {
+        item = strtok(NULL, " ");
+        TanggalKembali = atoi(item);
+    }
+
+    Car * car = list1(NomorPlat, jartem);
+    car->TanggalKembali = TanggalKembali;
+    list = addToList(list, car, List0);
+    return list;
+}
+
+char * verifplat()
+{
+    char * NomorPlat;
+    int huruf = 0;
+    int angka = 0;
+    int Kapital = 0;
+    NomorPlat = malloc(sizeof(char) * 1000);
+    if (NomorPlat == NULL)
+    {
+        printf("Input Salah\n");
+        exit(0);
+    }
+
+
+    while (!(huruf == 4 && angka == 4 && strlen(NomorPlat) == 8 && Kapital == 1))
+    {
+       angka = 0;
+        huruf = 0;
+        printf("Tulis Plat Nomor Anda: \n");
+        printf("Plat harus berisi 4 huruf Kapital dan 4 angka.\n");
+        scanf("%s", NomorPlat);
+        Kapital = 1;
+        for (int i = 0; i < strlen(NomorPlat); i++)
+        {
+            if (isdigit(NomorPlat[i]))
+            {
+               angka++;
+            }
+            else if (isalpha(NomorPlat[i]))
+            {
+                if (islower(NomorPlat[i]))
+                {
+                    Kapital = 0;
+                }
+                huruf++;
+            }
+        }
+        if (huruf != 4 ||angka != 4 || strlen(NomorPlat) != 8 || Kapital != 1)
+        {
+            printf("Error: Plat harus berisi 4 huruf Kapital dan 4 angka.\n");
+        }
+    }
+    return NomorPlat;
+}
+
+
+double harga(int jartem)
+{
+    double harga1 = 0.0;
+    double hargatambah = 0.0;
+    if (jartem <= 100)
+    {
+        harga1 = 40.0;
+    }
+    else
+    {
+        hargatambah = (jartem-100.0)*0.2;
+        harga1 = 20.0 + hargatambah;
+    }
+    return harga1;
+}
+
+
+int tanggalbeda(int tanggal1, int tanggal2)
+{
+    char tanggalpertama[8] = "";
+    char tanggalkedua[8] = "";
+    sprintf(tanggalpertama, "%06d", tanggal1); 
+    sprintf(tanggalkedua, "%06d", tanggal2);
+
+    for(int i = 0; i < 8; i++)
+    {
+        if (tanggalpertama[i] - '0' < tanggalkedua[i] - '0')
+        {
+            return 1;
+        }
+        else if (tanggalpertama[i] == tanggalkedua[i])
+        {
+            continue;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    return 0;
+}
+
+
+int cekduplikat(Car * list, Car * listTwo, char * NomorPlat, int option)
+{
+    Car * temp = list;
+    Car * tempTwo = listTwo;
+
+    while (tempTwo != NULL)
+    {
+        if (strcmp(tempTwo->NomorPlat, NomorPlat) == 0)
+        {
+            if (option == 0)
+            {
+                printf("Error: Mobil dengan plat tersebut sudah ada.\n");
+            }
+
+            return 0;
+         }
+        tempTwo = tempTwo->next;
+    }
+
+    if (option == 1) 
+    {
+        printf("Error: Tidak ada Mobil dengan berplat tersebut di sistem.\n");
+        return 1;
+    }
+
+    if (option == 2)
+    {
+        printf("Error: Tidak ada Mobil dengan berplat tersebut di sistem.\n");
+        return 1;
+    }
+
+
+    while (temp != NULL)
+    {
+        if (strcmp(temp->NomorPlat, NomorPlat) == 0)
+        {
+            printf("Error: Mobil dengan plat tersebut sudah ada.\n");
+            return 0;
+        }
+        temp = temp->next;
+    }
+    return 1;
+}
+
+int carijartem(Car * list, char * NomorPlat)
+{{
+    Car * temp = list;
+
+    while (temp != NULL)
+    {
+         if (strcmp(temp->NomorPlat, NomorPlat) == 0) 
+             return temp->jartem;
+         }
+         temp = temp->next;
+    }
+    return 0;
+}
+
+
+int verifpilihan(char * command)
+{
+    int input = 0;
+    for (int i = 0; i < strlen(command); i++)
+    {
+        if (!isdigit(command[i]))
+        {
+                printf("Error: Mohon Coba Lagi :\n");
+                return 0;
+        }
+        else
+        {
+            input = atoi(command);
+            if (command[0] == '0' || input > 8)
+            {
+                printf("Error: Mohon Coba Lagi :\n");
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+
+int veriftanggal()
+{
+    char * tanggal;
+    int error = 0;
+    int convertTanggal = 0;
+    tanggal = malloc(sizeof(char) * 1000);
+    if (tanggal == NULL)
+    {
+        printf("input salah\n");
+        exit(0);
+    }
+
+    while (error == 0)
+    {
+        printf("tanggal pengembalian (DDMMYY): \n");
+        scanf("%s", tanggal);
+
+        error = 1;
+        for (int i = 0; i < strlen(tanggal); i++)
+        {
+            if (!isdigit(tanggal[i]) || strlen(tanggal) != 6)
+            {
+                error = 0;
+            }
+        }
+        if (error == 0)
+        {
+            printf("Error tanggal pengembalian harus (DDMMYY)\n");
+        }
+    }
+    convertTanggal = atoi(tanggal);
+    free(tanggal);
+    return convertTanggal;
+}
+
+
+int verifjart()
+{
+    char * jartem;
+    int error = 0;
+    int convertJart = 0;
+    jartem = malloc(sizeof(char) * 1000);
+    if (jartem == NULL)
+    {
+        printf("Input Salah.\n");
+        exit(0);
+    }
+
+    while (error == 0)
+    {
+        printf("Masukkan jarak tempuh mobil: \n");
+        scanf("%s", jartem);
+
+        error = 1;
+
+        if (jartem[0] == '0' && strlen(jartem) != 1)
+        {
+            printf("Error: Please try again.\n");
+            error = 0;
+            continue;
+        }
+
+        for (int i = 0; i < strlen(jartem); i++)
+        {
+            if (!isdigit(jartem[i]))
+            {
+                error = 0;
+            }
+        }
+        if (error == 0)
+        {
+            printf("Error: Please try again.\n");
+        }
+    }
+    convertJart = atoi(jartem);
+    free(jartem);
+    return convertJart;
+}
+
+void printList(Car * list)
+{
+    Car * temp = list;
+
+    if (temp == NULL)
+    {
+        printf("Tidak ada mobil di list\n");
+    }
+
+    while (temp != NULL)
+    {
+        printf("Nomor Plat = %s, Jarak Tempuh = %d", temp->NomorPlat, temp->jartem);
+        if (temp->TanggalKembali != 0)
+        {
+            printf(", Tanggal Pengembalian = %06d\n", temp->TanggalKembali);
+        }
+        else
+        {
+            printf("\n");
+        }
+        temp = temp->next;
+    }
+    return;
+}
